@@ -1,0 +1,47 @@
+# 1. プラグイン名を設定します (ハイフン区切りを推奨)
+PLUGIN_NAME="vim-BashRunner"
+
+# 2. autoload や plugin 内で使うスクリプト名を設定します
+#    (通常はプラグイン名をアンダースコア区切りにしたものなど)
+SCRIPT_NAME="vim_bashrunner"
+
+# 3. トップレベルディレクトリを作成し、その中に移動します
+mkdir "$PLUGIN_NAME"
+cd "$PLUGIN_NAME" || exit 1 # ディレクトリ移動に失敗したら終了
+
+# 4. 必要なサブディレクトリを再帰的に作成します (-p オプション)
+mkdir -p .github/workflows \
+         autoload/"$SCRIPT_NAME" \
+         doc \
+         ftplugin \
+         indent \
+         plugin \
+         syntax \
+         test/fixtures
+
+# 5. 必要な空ファイルを touch コマンドで作成します
+#    (ファイルが存在しない場合に新規作成します)
+touch .github/workflows/test.yml \
+      .gitignore \
+      autoload/"$SCRIPT_NAME"/core.vim \
+      autoload/"$SCRIPT_NAME"/utils.vim \
+      doc/"$PLUGIN_NAME".txt \
+      ftplugin/python_"$SCRIPT_NAME".vim \
+      indent/mycustomfile.vim \
+      plugin/"$SCRIPT_NAME".vim \
+      syntax/mycustomfile.vim \
+      test/fixtures/.gitkeep \
+      test/test_core.vader \
+      LICENSE \
+      README.md
+
+# 6. (オプション) 生成されたディレクトリ構造を確認します
+echo "--- Directory structure for $PLUGIN_NAME created: ---"
+ls -R .
+echo "----------------------------------------------------"
+
+# 7. (オプション) 元のディレクトリに戻る場合はコメントアウトを外します
+# cd ..
+
+echo "Successfully created the skeleton for the Vim plugin '$PLUGIN_NAME'."
+
