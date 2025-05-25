@@ -23,9 +23,9 @@
 
 " options子メニュー定義
 :let g:term_options = [
-      \ {'name': 'last_line', 'flag': 1, 'menu_str': '実行行マーク', 'menupid': 0},
-      \ {'name': 'next_line', 'flag': 1, 'menu_str': '次の行に移動', 'menupid': 0},
-      \ {'name': 'trim_spce', 'flag': 1, 'menu_str': '実行時行頭の空白を削除', 'menupid': 0}]
+      \ {'name': 'last_line', 'flag': 1, 'menu_str': '実行行マーク', 'menupid': 0, 'use_flag': 1},
+      \ {'name': 'next_line', 'flag': 1, 'menu_str': '次の行に移動', 'menupid': 0, 'use_flag': 1},
+      \ {'name': 'trim_spce', 'flag': 1, 'menu_str': '実行時行頭の空白を削除', 'menupid': 0, 'use_flag': 1}]
 
 " terminal子メニュー定義
 :let g:term_terminal = [
@@ -405,7 +405,7 @@ endfunction
             :endif
             :redraw " クリック後すぐに再描画
             :redir END
-            :return " いずれかの子メニューが処理されたら終了
+            :return 0  " いずれかの子メニューが処理されたら終了
           :endif
         :endfor
       :endif

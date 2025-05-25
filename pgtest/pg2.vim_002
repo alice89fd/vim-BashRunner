@@ -1,0 +1,425 @@
+#! vim -u NONE
+:set viminfo= " viminfoを読み込まない。
+:set history=1000 " コマンドライン履歴の保存数を設定（例：1000個）。
+:set wildmenu " コマンドラインでメニューによる補完を有効化。
+:set wildmode=longest,list " 補完方法を設定（例：共通部分を補完後、候補をリスト表示）。
+:set wildignore=*.o,*.obj,*~ " 補完対象から除外するファイルパターンを設定。
+:set hlsearch " 検索語をハイライト表示。
+:set noincsearch " 検索語をインクリメンタルにハイライト表示。
+:set cpo-=< " <>記法を有効とする。
+:set cpo-=C " 連結行のコメント継続を有効にする
+:set laststatus=2 " ステータスラインを常に表示する。
+:set mouse=a
+
+:if !exists('g:term_trigger_key')
+  :let g:term_trigger_key = "<F8>" " トリガーキーを定義する変数。デフォルトは<F8>。
+:endif
+
+" ルートメニュー定義
+:let g:term_root_menu = [
+      \ {'name': 'options',  'color': 'lightmagenta', 'clicked': 0, 'menu_str': 'options',  'width': 8,  'popup_winid': 0},
+      \ {'name': 'terminal', 'color': 'lightgreen',   'clicked': 0, 'menu_str': 'terminal', 'width': 10, 'popup_winid': 0},
+      \ {'name': 'title',    'color': 'lightcyan',    'clicked': 0, 'menu_str': 'TERMEXEC', 'width': 10, 'popup_winid': 0}]
+
+" options子メニュー定義
+:let g:term_options = [
+      \ {'name': 'last_line', 'flag': 1, 'menu_str': '実行行マーク', 'menupid': 0},
+      \ {'name': 'next_line', 'flag': 1, 'menu_str': '次の行に移動', 'menupid': 0},
+      \ {'name': 'trim_spce', 'flag': 1, 'menu_str': '実行時行頭の空白を削除', 'menupid': 0}]
+
+" terminal子メニュー定義
+:let g:term_terminal = [
+      \ {'name': 'add_term', 'flag': 0, 'menu_str': 'Terminalを追加', 'menupid': 0, 'use_flag': 0, 'func': 'CreateNewTerminal'},
+      \ {'name': 'fukusuu', 'flag': 0, 'menu_str': '複数対応', 'menupid': 0, 'use_flag': 1},
+      \ {'name': 'sayuu', 'flag': 0, 'menu_str': '左右に並べる', 'menupid': 0, 'use_flag': 1}]
+      " {'name': 'jyouge','flag': 0,'menu_str': '上下に並べる', 'menupid': 0,'use_flag': 1}
+
+" title子メニュー定義
+:let g:term_title = []
+
+" ターミナル一覧定義
+:let g:term_list_max_cnt = 1
+:let g:term_lists = []  " sample [{'term_name': 'term001', 'target_flg': 1,'log_name': "", 'last_wrote_line': 1}] " ターミナル情報を保持するリスト。
+
+" options子メニュー処理関数
+:let g:options_func = {}
+  " 子メニューを作成する関数
+  :function! g:options_func.CreatePopup()
+    :for c in range(len(g:term_options))
+      :let _ = (g:term_options[c].flag ? '[x]' : '[ ]') . ' ' . g:term_options[c].menu_str
+      :let l:option_popup_opts = {'line': 2 + c, 'col': winwidth(0) - 30, 'minwidth': 30, 'highlight': 'hloptions', 'padding': [0, 1, 0, 1], 'border': [0, 0, 0, 0]}
+      :let g:term_options[c].menupid = popup_create(_, l:option_popup_opts)
+    :endfor
+  :endfunction
+
+  " 子メニューを削除する関数
+  :function! g:options_func.DeletePopup()
+    :for c in range(len(g:term_options))
+      :call popup_close(g:term_options[c].menupid)
+      :let g:term_options[c].menupid = 0
+    :endfor
+  :endfunction
+
+  " 子メニューを更新する関数
+  :function! g:options_func.UpdatePopup()
+    :for c in range(len(g:term_options))
+      :let _ = (g:term_options[c].flag ? '[x]' : '[ ]') . ' ' . g:term_options[c].menu_str
+      :call popup_settext(g:term_options[c].menupid, _)
+    :endfor
+  :endfunction
+
+" terminal子メニュー処理関数
+:let g:terminal_func = {}
+  " 子メニューを作成する関数
+  :function! g:terminal_func.CreatePopup()
+    :redir >> log.txt
+    " terminal一覧
+    :for cnt_term in range(len(g:term_lists))
+      :let l:option_popup_opts = {'line': cnt_term + 2, 'col': winwidth(0) - 64, 'minwidth': 30, 'highlight': 'hlterminal', 'padding': [0, 1, 0, 1], 'border': [0, 0, 0, 0]}
+      :if g:term_terminal[filter(range(len(g:term_terminal)), 'g:term_terminal[v:val].name == "fukusuu"')[0]].flag
+        :let _ = (g:term_lists[cnt_term].target_flg ? '[x]' : '[ ]')
+      :else
+        :let _ = (g:term_lists[cnt_term].target_flg ? '(x)' : '( )')
+      :endif
+      :let _ .= ' ' . g:term_lists[cnt_term].term_name
+      :let _ .= ' b(' . bufnr(g:term_lists[cnt_term].term_name) . ')'
+      :let _ .= ' w(' . bufwinid(g:term_lists[cnt_term].term_name) . ')'
+      :let g:term_lists[cnt_term].menupid = popup_create(_, l:option_popup_opts)
+    :endfor
+
+    :for c in range(len(g:term_terminal))
+      :if g:term_terminal[c].use_flag
+        :let _ = (g:term_terminal[c].flag ? '[x]' : '[ ]') . ' ' . g:term_terminal[c].menu_str
+      :else
+        :let _ = '    ' . g:term_terminal[c].menu_str
+      :endif
+      :let l:option_popup_opts = {'line': 2 + c, 'col': winwidth(0) - 30, 'minwidth': 30, 'highlight': 'hlterminal', 'padding': [0, 1, 0, 1], 'border': [0, 0, 0, 0]}
+      :let g:term_terminal[c].menupid = popup_create(_, l:option_popup_opts)
+    :endfor
+    :redir END
+  :endfunction
+
+  " 子メニューを削除する関数
+  :function! g:terminal_func.DeletePopup()
+    " terminal一覧
+    :for cnt_term in range(len(g:term_lists))
+      :call popup_close(g:term_lists[cnt_term].menupid)
+      :let g:term_lists[cnt_term].menupid = 0
+    :endfor
+
+    :for c in range(len(g:term_terminal))
+      :call popup_close(g:term_terminal[c].menupid)
+      :let g:term_terminal[c].menupid = 0
+    :endfor
+  :endfunction
+
+  " 子メニューを更新する関数
+  :function! g:terminal_func.UpdatePopup()
+    " terminal一覧
+    :for cnt_term in range(len(g:term_lists))
+      :let l:option_popup_opts = {'line': cnt_term + 2, 'col': winwidth(0) - 64, 'minwidth': 30, 'highlight': 'hlterminal', 'padding': [0, 1, 0, 1], 'border': [0, 0, 0, 0]}
+      :if g:term_terminal[filter(range(len(g:term_terminal)), 'g:term_terminal[v:val].name == "fukusuu"')[0]].flag
+        :let _ = (g:term_lists[cnt_term].target_flg ? '[x]' : '[ ]')
+      :else
+        :let _ = (g:term_lists[cnt_term].target_flg ? '(x)' : '( )')
+      :endif
+      :let _ .= ' ' . g:term_lists[cnt_term].term_name
+      :let _ .= ' b(' . bufnr(g:term_lists[cnt_term].term_name) . ')'
+      :let _ .= ' w(' . bufwinid(g:term_lists[cnt_term].term_name) . ')'
+      :if g:term_lists[cnt_term].menupid
+        :call popup_settext(g:term_lists[cnt_term].menupid, _)
+      :else
+        :let g:term_lists[cnt_term].menupid = popup_create(_, l:option_popup_opts)
+      :endif
+    :endfor
+
+    :for c in range(len(g:term_terminal))
+      :if g:term_terminal[c].use_flag
+        :let _ = (g:term_terminal[c].flag ? '[x]' : '[ ]') . ' ' . g:term_terminal[c].menu_str
+      :else
+        :let _ = '    ' . g:term_terminal[c].menu_str
+      :endif
+      :call popup_settext(g:term_terminal[c].menupid, _)
+    :endfor
+  :endfunction
+
+" title子メニュー処理関数
+:let g:title_func = {}
+  " 子メニューを作成する関数
+  :function! g:title_func.CreatePopup()
+    :for c in range(len(g:term_title))
+      :let _ = (g:term_title[c].flag ? '[x]' : '[ ]') . ' ' . g:term_title[c].menu_str
+      :let l:option_popup_opts = {'line': 2 + c, 'col': winwidth(0) - 30, 'minwidth': 30, 'highlight': 'hlterminal', 'padding': [0, 1, 0, 1], 'border': [0, 0, 0, 0]}
+      :let g:term_title[c].menupid = popup_create(_, l:option_popup_opts)
+    :endfor
+  :endfunction
+
+  " 子メニューを削除する関数
+  :function! g:title_func.DeletePopup()
+    :for c in range(len(g:term_title))
+      :call popup_close(g:term_title[c].menupid)
+      :let g:term_title[c].menupid = 0
+    :endfor
+  :endfunction
+
+  " 子メニューを更新する関数
+  :function! g:title_func.UpdatePopup()
+    :for c in range(len(g:term_title))
+      :let _ = (g:term_title[c].flag ? '[x]' : '[ ]') . ' ' . g:term_title[c].menu_str
+      :call popup_settext(g:term_title[c].menupid, _)
+    :endfor
+  :endfunction
+
+" ターミナルを表示する関数
+:function! ShowTerminal()
+  :let l:current_winid = win_getid() " 現在のウィンドウIDを取得します。
+  :for c in range(len(g:term_lists)) " termに紐付くすべてのwinidをhideする
+    :let l:term_winid = bufwinid(g:term_lists[c].term_name)
+    :if l:term_winid != -1
+      :call win_gotoid(l:term_winid)
+      :execute "hide"
+      :call win_gotoid(l:current_winid)
+    :endif
+  :endfor
+  :let l:fitst_split = 1
+  :for c in range(len(g:term_lists)) " target_flgがオンのものを表示する
+    :if g:term_lists[c].target_flg
+      :if l:fitst_split
+        :let l:fitst_split = 0
+        :execute "bo sp | buffer! " . bufnr(g:term_lists[c].term_name)
+      :else
+        :if g:term_terminal[filter(range(len(g:term_terminal)), 'g:term_terminal[v:val].name == "sayuu"')[0]].flag
+          :execute "rightbelow vsplit | buffer! " . bufnr(g:term_lists[c].term_name)
+        :else
+          :execute "bo sp | buffer! " . bufnr(g:term_lists[c].term_name)
+        :endif
+      :endif
+    :endif
+  :endfor
+  :call win_gotoid(l:current_winid)
+  " g:term_lists一覧の表示更新
+  :if g:term_root_menu[filter(range(len(g:term_root_menu)), 'g:term_root_menu[v:val].name == "terminal"')[0]].clicked
+    :call g:terminal_func.UpdatePopup()
+  :endif
+:endfunction
+
+" ターミナルを作成する関数
+:function! CreateNewTerminal()
+  :let term_name = 'term' . printf('%03d', g:term_list_max_cnt)
+  :let g:term_list_max_cnt += 1
+
+  :call term_start(['bash'], {'term_name': term_name, 'term_finish': 'close', 'hidden': 1})
+
+  " 複数フラグをチェックしてオフの時の処理
+  :if !g:term_terminal[filter(range(len(g:term_terminal)), 'g:term_terminal[v:val].name == "fukusuu"')[0]].flag
+    " 複数オプションオフなら既存は全てオフに
+    :for cnt_term in range(len(g:term_lists))
+      :let g:term_lists[cnt_term].target_flg = 0
+    :endfor
+  :endif
+
+  " g:term_lists に追加
+  :call add(g:term_lists, {'term_name': term_name, 'target_flg': 1, 'log_name': "", 'last_wrote_line': 1, 'menupid': 0})
+
+  " g:term_lists の表示を更新
+  :call ShowTerminal()
+
+  " bashのプロンプトが表示されるまで待機
+  :let l:start_time = reltime()
+  :while reltime(l:start_time)[0] < 5
+    :if getbufline(bufnr(term_name), 1, '$')[-1] =~ '.*[\$#].*' | :break | :endif
+    :sleep 100m
+  :endwhile
+
+:endfunction
+
+" カレント行のテキストをVimスクリプトとして実行する関数。
+:function! ExecuteCurrentLineAsVimscript(line_content)
+  " 取得したテキストをVimスクリプトとして実行。
+  :try
+    :execute a:line_content
+  :catch /^Vim\%((\a\+)\)\=:E12:/
+    :echohl ErrorMsg
+    :echomsg "Error executing: " . v:exception
+    :echohl None
+  :endtry
+:endfunction
+
+" カレント行のテキストをBashコマンドとして実行する関数。
+:function! ExecuteCurrentLineAsBash(line_content)
+
+  " ターミナルが未作成であれば作成
+  :if len(g:term_lists) == 0
+    :call CreateNewTerminal()
+  :endif
+
+  :for c in range(len(g:term_lists)) " ターミナル情報を取得。
+    :if !has_key(g:term_lists[c], 'term_name')
+      :echomsg "term information is not found."
+      :return
+    :endif
+    :if g:term_lists[c].target_flg
+      " コマンドを実行する。
+      :if empty(a:line_content)
+        :call term_sendkeys(bufnr(g:term_lists[c].term_name), "\<CR>")
+      :else
+        :call term_sendkeys(bufnr(g:term_lists[c].term_name), a:line_content . "\<CR>")
+      :endif
+    :endif
+  :endfor
+:endfunction
+
+" カレント行をVimscriptまたはBashで実行する関数。
+:function! ExecuteCurrentLine()
+  :let line_content = getline(line('.')) " カレント行のテキストを取得。
+
+  " 実行した行のsign処理。
+  :if filter(copy(g:term_options), 'v:val.name == "last_line"')[0].flag != 0
+    :call sign_define('TermExecuted', {'text': '->', 'texthl': 'Search'})
+    :call sign_unplace('*', {'group': 'TermExecuted'})
+    :call sign_place(0, 'TermExecuted', 'TermExecuted', bufnr('%'), {'lnum': line('.')})
+  :else
+    :call sign_unplace('*', {'group': 'TermExecuted'})
+  :endif
+
+  " 次の非コメント行へ移動 (複数行コメントに対応)
+  :if filter(copy(g:term_options), 'v:val.name == "next_line"')[0].flag != 0
+    :let l:next_line = line('.') + 1
+    :while l:next_line <= line('$') && getline(l:next_line) =~# '^\s*#'
+      :let l:next_line += 1
+    :endwhile
+    :if l:next_line <= line('$')
+      :call cursor(l:next_line, 1)
+    :endif
+  :endif
+
+  " あたまの空白のトリム
+  :if g:term_options[filter(range(len(g:term_options)), 'g:term_options[v:val].name == "trim_spce"')[0]].flag
+    :let line_content = substitute(line_content, "^\\s*", "", "")
+  :endif
+
+  " 実行
+  :if line_content =~ '^\s*:'
+    :call ExecuteCurrentLineAsVimscript(line_content) " 行の先頭が : ならvimscriptとして実行。
+  :else
+    :call ExecuteCurrentLineAsBash(line_content)
+  :endif
+:endfunction
+
+" マウスクリック時に実行される関数
+:function! ShowClickPosition()
+  :redir >> log.txt
+  :call getchar()
+  :echo "行番号: " . v:mouse_lnum . ", 列番号: " . v:mouse_col . ", winid: " . v:mouse_winid
+
+  " 子メニュー項目がクリックされたか確認(個別に分けるか)
+  :for c in range(len(g:term_root_menu))
+    :if g:term_root_menu[c].clicked
+      :for i in get(g:, "term_" . g:term_root_menu[c].name)
+        :if v:mouse_winid == i.menupid
+          :if i.use_flag
+            :let i.flag = !i.flag
+            :if exists("g:" . g:term_root_menu[c].name . "_func.UpdatePopup")
+              :call get(g:, g:term_root_menu[c].name . "_func").UpdatePopup()
+            :endif
+          :else
+            :let Func = function(i.func)
+            :call Func()
+            :call g:terminal_func.UpdatePopup()
+          :endif
+        :endif
+      :endfor
+    :endif
+  :endfor
+
+  " rootメニューの押下の確認と処理 (共通で良いかな)
+  :for c in range(len(g:term_root_menu))
+    :if v:mouse_winid == g:term_root_menu[c].popup_winid
+      :if g:term_root_menu[c].clicked == 0
+        " 他のrootメニューは閉じるのでclicked
+        :for cnt_root in filter(range(len(g:term_root_menu)), 'g:term_root_menu[v:val].clicked == 1')
+          :let g:term_root_menu[cnt_root].clicked = 0
+          :call popup_setoptions(g:term_root_menu[cnt_root].popup_winid,{'highlight': 'hl' . g:term_root_menu[cnt_root].name})
+          :if exists("g:" . g:term_root_menu[cnt_root].name . "_func.CreatePopup")
+            :call get(g:, g:term_root_menu[cnt_root].name . "_func").DeletePopup()
+          :endif
+        :endfor
+        :let g:term_root_menu[c].clicked = 1
+        :call popup_setoptions(g:term_root_menu[c].popup_winid,{'highlight': 'hl'.g:term_root_menu[c].name."r"})
+        :if exists("g:" . g:term_root_menu[c].name . "_func.CreatePopup")
+          :call get(g:, g:term_root_menu[c].name . "_func").CreatePopup()
+        :endif
+      :else
+        :let g:term_root_menu[c].clicked = 0
+        :call popup_setoptions(g:term_root_menu[c].popup_winid,{'highlight': 'hl'.g:term_root_menu[c].name})
+        :if exists("g:" . g:term_root_menu[c].name . "_func.CreatePopup")
+          :call get(g:, g:term_root_menu[c].name . "_func").DeletePopup()
+        :endif
+      :endif
+    :endif
+  :endfor
+
+  " 端末一覧が押されたか？
+  :for cnt_term in range(len(g:term_lists))
+    :if v:mouse_winid == g:term_lists[cnt_term].menupid " 端末一覧のアイテムが押されたか？
+      :if bufexists(g:term_lists[cnt_term].term_name) == 0 " 押されたterm_nameがbufを持ってなければg:term_listsから削除してbreak
+        :call remove(g:term_lists, cnt_term)
+        :call g:terminal_func.UpdatePopup()
+        :break
+      :endif
+      :if !g:term_terminal[filter(range(len(g:term_terminal)), 'g:term_terminal[v:val].name == "fukusuu"')[0]].flag " 「複数対応」がオフか？
+        :for c in range(len(g:term_lists)) " target_flgをゼロクリアして押されたもののみtarget_flgを1に変更！
+          :let g:term_lists[c].target_flg = 0
+        :endfor
+        :let g:term_lists[cnt_term].target_flg = 1 " 「複数対応」オフの時は押したtermのみtarget_flgを立てる。トグルしない
+      :else " 「複数対応」がオン時の処理
+        :let g:term_lists[cnt_term].target_flg = !g:term_lists[cnt_term].target_flg " 押したtermのtarget_flgを反転
+      :endif
+      :call ShowTerminal()
+    :endif
+  :endfor
+
+  " ボタンが「複数対応」ボタンだったら（もうトグルは済み）
+  :if v:mouse_winid == g:term_terminal[filter(range(len(g:term_terminal)), 'g:term_terminal[v:val].name == "fukusuu"')[0]].menupid
+    :for c in range(len(g:term_lists)) " target_flgをゼロクリアする
+      :let g:term_lists[c].target_flg = 0
+    :endfor
+    :call ShowTerminal()
+  :endif
+
+  " 再描画
+  :redraw
+
+  " 元のマウスクリックイベントを実行
+  " :normal! <LeftMouse> だめだ動かん
+  :redir END
+:endfunction
+
+" vimスクリプトファイルでロードされたときだけこの設定を有効にする。
+:augroup ExecuteCurrentLine
+  :autocmd!
+  " キーマッピングを定義する際に、g:term_trigger_key を使用する。
+  :execute 'autocmd VimEnter,BufEnter,BufReadPost * :nnoremap <buffer>' . g:term_trigger_key . ' :call ExecuteCurrentLine()<CR>'
+  :noremap <script> <LeftMouse> :call ShowClickPosition()<CR>
+ :augroup END
+
+:" root_menuの表示
+  :for c in range(len(g:term_root_menu))
+    :execute 'highlight hl' . g:term_root_menu[c].name . "r ctermfg=" . g:term_root_menu[c].color . " ctermbg=black"
+    :execute 'highlight hl' . g:term_root_menu[c].name . " ctermfg=black ctermbg=" . g:term_root_menu[c].color
+  :endfor
+
+  :let posx = winwidth(0)
+  :for c in range(len(g:term_root_menu))
+    :let opts = {}
+    :let opts.line = 1
+    :let posx -= g:term_root_menu[c].width
+    :let opts.col = posx
+    :let posx -= 1
+    :let opts.pos = 'botleft'
+    :let opts.padding = [0, 1, 0, 1]
+    :let opts.border = [0, 0, 0, 0]
+    :let opts.highlight = 'hl' . g:term_root_menu[c].name
+    :let menu_str = g:term_root_menu[c].menu_str
+    :let g:term_root_menu[c].popup_winid = popup_create(menu_str, opts)
+  :endfor
