@@ -4,7 +4,7 @@ endif
 let g:loaded_vim_bash_runner = 1
 
 " Default trigger key, user can override in vimrc
-let g:term_trigger_key = get(g:, 'term_trigger_key', '<Leader>r')
+let g:term_trigger_key = get(g:, 'term_trigger_key', '<F8>')
 
 " Default language, user can override in vimrc
 let g:vim_bash_runner_language = get(g:, 'vim_bash_runner_language', 'en')
