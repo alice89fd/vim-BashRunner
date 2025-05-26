@@ -21,38 +21,41 @@
 : "   name: メニュー名 (内部識別用)
 : "   color: 通常時の前景/背景色 (ハイライト名にも使用)
 : "   clicked: クリック状態 (0: 非アクティブ, 1: アクティブ)
-: "   menu_str: 表示文字列
+: "   menu_str: 表示文字列 (日本語)
+: "   menu_str_en: 表示文字列 (英語)
 : "   width: 表示幅
 : "   popup_winid: ポップアップウィンドウID
 :let g:term_root_menu = [
-      \ {'name': 'options',  'color': 'lightmagenta', 'clicked': 0, 'menu_str': 'options',  'width': 8,  'popup_winid': 0},
-      \ {'name': 'terminal', 'color': 'lightgreen',   'clicked': 0, 'menu_str': 'terminal', 'width': 10, 'popup_winid': 0},
-      \ {'name': 'title',    'color': 'lightcyan',    'clicked': 0, 'menu_str': 'TERMEXEC', 'width': 10, 'popup_winid': 0}]
+      \ {'name': 'options',  'color': 'lightmagenta', 'clicked': 0, 'menu_str': 'options',  'menu_str_en': 'Options',  'width': 8,  'popup_winid': 0},
+      \ {'name': 'terminal', 'color': 'lightgreen',   'clicked': 0, 'menu_str': 'terminal', 'menu_str_en': 'Terminal', 'width': 10, 'popup_winid': 0},
+      \ {'name': 'title',    'color': 'lightcyan',    'clicked': 0, 'menu_str': 'TERMEXEC', 'menu_str_en': 'TERMEXEC', 'width': 10, 'popup_winid': 0}]
 
 : " "options" 子メニューの定義
 : " 各要素:
 : "   name: オプション名 (内部識別用)
 : "   flag: 有効/無効フラグ (1: 有効, 0: 無効)
-: "   menu_str: 表示文字列
+: "   menu_str: 表示文字列 (日本語)
+: "   menu_str_en: 表示文字列 (英語)
 : "   menupid: ポップアップウィンドウID
 :let g:term_options = [
-      \ {'name': 'last_line', 'flag': 1, 'menu_str': '実行行マーク', 'menupid': 0},
-      \ {'name': 'next_line', 'flag': 1, 'menu_str': '次の行に移動', 'menupid': 0},
-      \ {'name': 'trim_spce', 'flag': 1, 'menu_str': '実行時行頭の空白を削除', 'menupid': 0}]
+      \ {'name': 'last_line', 'flag': 1, 'menu_str': '実行行マーク', 'menu_str_en': 'Mark Executed Line', 'menupid': 0},
+      \ {'name': 'next_line', 'flag': 1, 'menu_str': '次の行に移動', 'menu_str_en': 'Move to Next Line', 'menupid': 0},
+      \ {'name': 'trim_spce', 'flag': 1, 'menu_str': '実行時行頭の空白を削除', 'menu_str_en': 'Trim Leading Spaces', 'menupid': 0}]
 
 : " "terminal" 子メニューの定義
 : " 各要素:
 : "   name: 機能名 (内部識別用)
 : "   flag: チェックボックス用フラグ (1: オン, 0: オフ)
-: "   menu_str: 表示文字列
+: "   menu_str: 表示文字列 (日本語)
+: "   menu_str_en: 表示文字列 (英語)
 : "   menupid: ポップアップウィンドウID
 : "   use_flag: チェックボックスとして使用するか (1: する, 0: しない)
 : "   func: クリック時に実行する関数名 (use_flagが0の場合)
 :let g:term_terminal = [
-      \ {'name': 'add_term', 'flag': 0, 'menu_str': 'Terminalを追加', 'menupid': 0, 'use_flag': 0, 'func': 'CreateNewTerminal'},
-      \ {'name': 'fukusuu', 'flag': 0, 'menu_str': '複数対応', 'menupid': 0, 'use_flag': 1},
-      \ {'name': 'sayuu', 'flag': 0, 'menu_str': '左右に並べる', 'menupid': 0, 'use_flag': 1}]
-      " {'name': 'jyouge','flag': 0,'menu_str': '上下に並べる', 'menupid': 0,'use_flag': 1} "未使用の定義例
+      \ {'name': 'add_term', 'flag': 0, 'menu_str': 'Terminalを追加', 'menu_str_en': 'Add Terminal', 'menupid': 0, 'use_flag': 0, 'func': 'CreateNewTerminal'},
+      \ {'name': 'fukusuu', 'flag': 0, 'menu_str': '複数対応', 'menu_str_en': 'Multiple Targets', 'menupid': 0, 'use_flag': 1},
+      \ {'name': 'sayuu', 'flag': 0, 'menu_str': '左右に並べる', 'menu_str_en': 'Side by Side', 'menupid': 0, 'use_flag': 1}]
+      " {'name': 'jyouge','flag': 0,'menu_str': '上下に並べる', 'menu_str_en': 'Top and Bottom', 'menupid': 0,'use_flag': 1} "未使用の定義例
 
 : " "title" 子メニューの定義 (現在は空)
 :let g:term_title = []
@@ -568,6 +571,39 @@ function! ShowClickPosition()
   " 通常はポップアップ操作で完결するため不要。
 endfunction
 
+" --- 言語設定 ---
+" 環境変数 LANG に基づいてメニューの表示言語を設定する
+function! s:SetupMenuLanguage()
+  let lang_env = $LANG
+  let is_japanese = 0
+  if lang_env =~? '^ja'
+    let is_japanese = 1
+  endif
+
+  if !is_japanese
+    for item in g:term_root_menu
+      if has_key(item, 'menu_str_en')
+        let item.menu_str = item.menu_str_en
+      endif
+    endfor
+    for item in g:term_options
+      if has_key(item, 'menu_str_en')
+        let item.menu_str = item.menu_str_en
+      endif
+    endfor
+    for item in g:term_terminal
+      if has_key(item, 'menu_str_en')
+        let item.menu_str = item.menu_str_en
+      endif
+    endfor
+    for item in g:term_title " 現在は空だが将来のために
+      if has_key(item, 'menu_str_en')
+        let item.menu_str = item.menu_str_en
+      endif
+    endfor
+  endif
+endfunction
+
 " Vimスクリプトファイルでロードされたときだけこの設定を有効にする。
 augroup ExecuteCurrentLine
   autocmd!
@@ -575,6 +611,9 @@ augroup ExecuteCurrentLine
   execute 'autocmd VimEnter,BufEnter,BufReadPost * nnoremap <buffer><silent>' . g:term_trigger_key . ' :call ExecuteCurrentLine()<CR>'
   noremap <script> <LeftMouse> :call ShowClickPosition()<CR>
 augroup END
+
+" 言語設定を適用
+call s:SetupMenuLanguage()
 
 " ルートメニューのハイライト定義と表示
 for item_dict in g:term_root_menu

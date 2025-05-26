@@ -1,0 +1,46 @@
+*vim_bash_runner.txt*    For Vim version 8.x    Last change: YYYY MM DD
+
+VIM_BASH_RUNNER PLUGIN
+
+1. Introduction                       *vim_bash_runner-introduction*
+2. Usage                              *vim_bash_runner-usage*
+3. Configuration                      *vim_bash_runner-configuration*
+
+==============================================================================
+1. INTRODUCTION                               *vim_bash_runner-introduction*
+
+vim_bash_runner は、Vim から Bash コマンドを実行し、ターミナルを管理するためのプラグインです。
+ポップアップメニューを通じて、実行オプションやターミナルの表示を制御できます。
+
+==============================================================================
+2. USAGE                                      *vim_bash_runner-usage*
+
+デフォルトでは、|<F8>| キーにカレント行の実行コマンドがマッピングされています。
+行頭が ":" で始まる場合は Vim script として、それ以外は Bash コマンドとして実行されます。
+画面上部に表示されるメニューをクリックすることで、各種オプションを変更したり、ターミナルを追加・管理したりできます。
+
+==============================================================================
+3. CONFIGURATION                              *vim_bash_runner-configuration*
+
+以下のグローバル変数を `.vimrc` で設定することで、プラグインの挙動をカスタマイズできます。
+
+*g:vim_bash_runner_trigger_key*
+  コマンド実行のトリガーキー。デフォルトは "<F8>" です。
+  例: >
+    let g:vim_bash_runner_trigger_key = "<F9>"
+<
+*g:vim_bash_runner_root_menu*
+  ルートメニューの定義。
+
+*g:vim_bash_runner_options*
+  "options" 子メニューの定義。
+
+*g:vim_bash_runner_terminal*
+  "terminal" 子メニューの定義。
+
+*g:vim_bash_runner_title*
+  "title" 子メニューの定義。
+
+詳細はプラグインのソースコードを参照してください。
+
+vim:tw=78:ts=8:ft=help:norl:
