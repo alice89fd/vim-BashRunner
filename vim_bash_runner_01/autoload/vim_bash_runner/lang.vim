@@ -104,3 +104,12 @@ function! vim_bash_runner#lang#SetLanguage(lang_code) abort
       call vim_bash_runner#ui#RefreshCurrentMenu()
   endif
 endfunction
+
+function! vim_bash_runner#lang#translate_text_if_needed(text_key) abort
+  if !exists('g:vim_bash_runner_language')
+    " Fallback if language is not set, though it should be by plugin initialization
+    return a:text_key
+  endif
+  let lang = g:vim_bash_runner_language
+  return s:translate(a:text_key, lang)
+endfunction
