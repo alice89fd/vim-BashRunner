@@ -19,8 +19,8 @@ augroup VimBashRunnerAu
   autocmd!
   " Initialize language settings once Vim is fully entered.
   " Using User event to allow deferral and explicit call if needed.
-  autocmd User VimBashRunnerInit call s:VimBashRunnerInit()
-  autocmd VimEnter * if !exists('s:vim_bash_runner_initialized') | doautocmd User VimBashRunnerInit | endif
+  autocmd User VimBashRunnerInit call s:VimBashRunnerInit() " Defines the custom event for initialization
+  autocmd VimEnter * if !s:vim_bash_runner_initialized | doautocmd User VimBashRunnerInit | endif " Trigger initialization on VimEnter if not already done
 augroup END
 
 let s:vim_bash_runner_initialized = 0
