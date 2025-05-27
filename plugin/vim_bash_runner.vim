@@ -29,7 +29,7 @@
 :let g:term_root_menu = [
       \ {'name': 'options',  'color': 'lightmagenta', 'clicked': 0, 'menu_str': 'options',  'menu_str_en': 'Options',  'width': 8,  'popup_winid': 0},
       \ {'name': 'terminal', 'color': 'lightgreen',   'clicked': 0, 'menu_str': 'terminal', 'menu_str_en': 'Terminal', 'width': 10, 'popup_winid': 0},
-      \ {'name': 'title',    'color': 'lightcyan',    'clicked': 0, 'menu_str': 'TERMEXEC', 'menu_str_en': 'TERMEXEC', 'width': 10, 'popup_winid': 0}]
+      \ {'name': 'title',    'color': 'lightcyan',    'clicked': 0, 'menu_str': 'bash runner', 'menu_str_en': 'bash runner', 'width': 14, 'popup_winid': 0}]
 
 : " "options" 子メニューの定義
 : " 各要素:
