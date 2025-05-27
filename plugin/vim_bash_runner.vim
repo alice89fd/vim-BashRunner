@@ -39,9 +39,9 @@
 : "   menu_str_en: 表示文字列 (英語)
 : "   menupid: ポップアップウィンドウID
 :let g:term_options = [
-      \ {'name': 'last_line', 'flag': 1, 'menu_str': '実行行マーク', 'menu_str_en': 'Mark Executed Line', 'menupid': 0},
-      \ {'name': 'next_line', 'flag': 1, 'menu_str': '次の行に移動', 'menu_str_en': 'Move to Next Line', 'menupid': 0},
-      \ {'name': 'trim_spce', 'flag': 1, 'menu_str': '実行時行頭の空白を削除', 'menu_str_en': 'Trim Leading Spaces', 'menupid': 0}]
+      \ {'name': 'last_line', 'flag': 1, 'menu_str': '実行行マーク', 'menu_str_en': 'Mark Executed Line', 'menupid': 0, 'use_flag': 1},
+      \ {'name': 'next_line', 'flag': 1, 'menu_str': '次の行に移動', 'menu_str_en': 'Move to Next Line', 'menupid': 0, 'use_flag': 1},
+      \ {'name': 'trim_spce', 'flag': 1, 'menu_str': '実行時行頭の空白を削除', 'menu_str_en': 'Trim Leading Spaces', 'menupid': 0, 'use_flag': 1}]
 
 : " "terminal" 子メニューの定義
 : " 各要素:
